@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title + ' | MooBurger' : 'MooBurger - Burger Reviews' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍔</text></svg>">
+  <% if (googleMapsApiKey) { %>
+    <script src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&libraries=places&callback=Function.prototype" async defer></script>
+  <% } %>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="/" class="logo">
+        <img class="logo-icon-svg" src="/images/bull-skull.svg" alt="">
+        <span class="logo-text">Moo<span class="logo-text-accent">Burger</span></span>
+      </a>
+      <div class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/tierlist" class="nav-link">Tier List</a>
+        <a href="/submit" class="nav-link">Submit a Spot</a>
+        <% if (isAdmin) { %>
+          <a href="/admin" class="nav-link active">Admin</a>
+          <a href="/admin/logout" class="nav-link btn-ghost">Logout</a>
+        <% } else { %>
+          <a href="/admin/login" class="nav-link">Admin</a>
+        <% } %>
+      </div>
+    </div>
+  </nav>

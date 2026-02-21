@@ -1,0 +1,149 @@
+<%- include('partials/header', { title: 'Tier List' }) %>
+
+<%
+const TIERS = [
+  { letter: 'S', label: 'LEGENDARY',  min: 4.5, max: 5.01, color: '#FF2D55', bg: 'rgba(255,45,85,0.12)',  border: 'rgba(255,45,85,0.4)'  },
+  { letter: 'A', label: 'ELITE',      min: 3.5, max: 4.5,  color: '#FF9500', bg: 'rgba(255,149,0,0.12)',  border: 'rgba(255,149,0,0.4)'  },
+  { letter: 'B', label: 'SOLID',      min: 2.5, max: 3.5,  color: '#FFD60A', bg: 'rgba(255,214,10,0.12)', border: 'rgba(255,214,10,0.4)' },
+  { letter: 'C', label: 'MID',        min: 1.5, max: 2.5,  color: '#30D158', bg: 'rgba(48,209,88,0.12)',  border: 'rgba(48,209,88,0.4)'  },
+  { letter: 'D', label: 'WEAK',       min: 0.5, max: 1.5,  color: '#64D2FF', bg: 'rgba(100,210,255,0.12)',border: 'rgba(100,210,255,0.4)' },
+  { letter: 'F', label: 'NAH',        min: 0,   max: 0.5,  color: '#8E8E93', bg: 'rgba(142,142,147,0.12)',border: 'rgba(142,142,147,0.4)' }
+];
+
+function getTierForScore(score) {
+  if (score <= 0) return null;
+  for (const t of TIERS) {
+    if (score >= t.min && score < t.max) return t;
+  }
+  return TIERS[TIERS.length - 1];
+}
+
+const unrated = restaurants.filter(r => r.admin_score <= 0 && r.user_score <= 0);
+%>
+
+<section class="tierlist-hero">
+  <h1>The Tier List</h1>
+  <p>Every burger spot, ranked. Toggle between official MooBurger rankings and community scores.</p>
+  <div class="tier-toggle-wrap">
+    <button class="tier-toggle-btn active" id="btn-admin" onclick="switchTier('admin')">
+      🍔 MooBurger Ranking
+    </button>
+    <button class="tier-toggle-btn" id="btn-user" onclick="switchTier('user')">
+      👥 Community Ranking
+    </button>
+  </div>
+</section>
+
+<section class="tierlist-section">
+  <div class="container">
+
+    <% TIERS.forEach(tier => { %>
+      <div class="tier-row" style="--tier-color: <%= tier.color %>; --tier-bg: <%= tier.bg %>; --tier-border: <%= tier.border %>;">
+        <div class="tier-label">
+          <span class="tier-letter"><%= tier.letter %></span>
+          <span class="tier-sublabel"><%= tier.label %></span>
+        </div>
+        <div class="tier-items">
+          <% restaurants.forEach(r => { %>
+            <%
+              const adminTier = getTierForScore(r.admin_score);
+              const userTier = getTierForScore(r.user_score);
+              const showAdmin = adminTier && adminTier.letter === tier.letter;
+              const showUser = userTier && userTier.letter === tier.letter;
+              if (!showAdmin && !showUser) return;
+            %>
+            <a href="/restaurant/<%= r.id %>"
+               class="tier-item<%= showAdmin ? ' tier-admin' : '' %><%= showUser ? ' tier-user' : '' %>"
+               title="<%= r.name %> — MooBurger: <%= r.admin_score > 0 ? r.admin_score.toFixed(1) : 'N/A' %> | Community: <%= r.user_score > 0 ? r.user_score.toFixed(1) : 'N/A' %>">
+              <% if (r.first_photo || r.coverImage) { %>
+                <img src="/uploads/<%= r.first_photo || r.coverImage %>"
+                     alt="<%= r.name %>"
+                     class="tier-item-img<%= (!r.first_photo && r.coverImage && r.coverImage.startsWith('logo-')) ? ' tier-item-logo' : '' %>">
+              <% } else { %>
+                <div class="tier-item-placeholder">🍔</div>
+              <% } %>
+              <div class="tier-item-info">
+                <span class="tier-item-name"><%= r.name %></span>
+                <span class="tier-item-score tier-item-score-admin"><%= r.admin_score > 0 ? r.admin_score.toFixed(1) : '—' %></span>
+                <span class="tier-item-score tier-item-score-user"><%= r.user_score > 0 ? r.user_score.toFixed(1) : '—' %></span>
+              </div>
+            </a>
+          <% }) %>
+          <% 
+            const hasAny = restaurants.some(r => {
+              const at = getTierForScore(r.admin_score);
+              const ut = getTierForScore(r.user_score);
+              return (at && at.letter === tier.letter) || (ut && ut.letter === tier.letter);
+            });
+            if (!hasAny) { 
+          %>
+            <div class="tier-empty">No restaurants in this tier yet</div>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+
+    <% if (unrated.length > 0) { %>
+      <div class="tier-row tier-row-unrated" style="--tier-color: #5A5652; --tier-bg: rgba(90,86,82,0.08); --tier-border: rgba(90,86,82,0.3);">
+        <div class="tier-label">
+          <span class="tier-letter" style="font-size: 1.2rem;">?</span>
+          <span class="tier-sublabel">UNRATED</span>
+        </div>
+        <div class="tier-items">
+          <% unrated.forEach(r => { %>
+            <a href="/restaurant/<%= r.id %>" class="tier-item tier-admin tier-user" title="<%= r.name %> — Not yet rated">
+              <% if (r.first_photo || r.coverImage) { %>
+                <img src="/uploads/<%= r.first_photo || r.coverImage %>"
+                     alt="<%= r.name %>"
+                     class="tier-item-img<%= (!r.first_photo && r.coverImage && r.coverImage.startsWith('logo-')) ? ' tier-item-logo' : '' %>">
+              <% } else { %>
+                <div class="tier-item-placeholder">🍔</div>
+              <% } %>
+              <div class="tier-item-info">
+                <span class="tier-item-name"><%= r.name %></span>
+                <span class="tier-item-score">—</span>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
+  </div>
+</section>
+
+<script>
+function switchTier(mode) {
+  const adminBtn = document.getElementById('btn-admin');
+  const userBtn = document.getElementById('btn-user');
+  const allItems = document.querySelectorAll('.tier-item');
+
+  if (mode === 'admin') {
+    adminBtn.classList.add('active');
+    userBtn.classList.remove('active');
+    allItems.forEach(el => {
+      el.style.display = el.classList.contains('tier-admin') ? '' : 'none';
+    });
+    document.querySelectorAll('.tier-item-score-admin').forEach(el => el.style.display = '');
+    document.querySelectorAll('.tier-item-score-user').forEach(el => el.style.display = 'none');
+  } else {
+    userBtn.classList.add('active');
+    adminBtn.classList.remove('active');
+    allItems.forEach(el => {
+      el.style.display = el.classList.contains('tier-user') ? '' : 'none';
+    });
+    document.querySelectorAll('.tier-item-score-admin').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.tier-item-score-user').forEach(el => el.style.display = '');
+  }
+
+  document.querySelectorAll('.tier-items').forEach(row => {
+    const visible = [...row.querySelectorAll('.tier-item')].filter(el => el.style.display !== 'none');
+    const empty = row.querySelector('.tier-empty');
+    if (empty) empty.style.display = visible.length === 0 ? '' : 'none';
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => switchTier('admin'));
+</script>
+
+<%- include('partials/footer') %>

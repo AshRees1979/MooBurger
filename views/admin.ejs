@@ -1,0 +1,248 @@
+<%- include('partials/header', { title: 'Admin Dashboard' }) %>
+
+<div class="admin-header">
+  <span style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;">🔐</span>
+  <h1>MooBurger HQ</h1>
+  <p style="opacity: 0.8;">Manage restaurants, reviews, and community submissions</p>
+</div>
+
+<div class="admin-grid">
+
+  <!-- Add New Restaurant -->
+  <div class="admin-card">
+    <h2>🍔 Add New Restaurant</h2>
+    <form action="/admin/restaurant" method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label class="form-label">Search for Restaurant</label>
+        <input type="text" id="place-autocomplete" class="form-input" placeholder="Start typing a restaurant name..." autocomplete="off">
+        <div id="place-suggestions" class="place-suggestions"></div>
+        <div class="form-hint">Type to search Google Maps, or enter manually below</div>
+      </div>
+
+      <div id="place-selected" class="place-selected-card" style="display: none;">
+        <div class="place-selected-inner">
+          <span class="place-selected-icon">📍</span>
+          <div>
+            <strong id="place-selected-name"></strong>
+            <div id="place-selected-address" style="font-size: 0.85rem; color: var(--gray-500);"></div>
+          </div>
+          <button type="button" class="btn btn-small btn-outline" onclick="clearPlaceSelection()">Clear</button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Restaurant Name *</label>
+          <input type="text" name="name" id="restaurant-name" class="form-input" placeholder="e.g. Patty Palace" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input type="text" name="location" id="restaurant-location" class="form-input" placeholder="e.g. 10 Burger Lane, Bristol">
+        </div>
+      </div>
+
+      <input type="hidden" name="placeId" id="placeId">
+      <input type="hidden" name="formattedAddress" id="formattedAddress">
+      <input type="hidden" name="phone" id="placePhone">
+      <input type="hidden" name="website" id="placeWebsite">
+      <input type="hidden" name="lat" id="placeLat">
+      <input type="hidden" name="lng" id="placeLng">
+      <input type="hidden" name="autoLogo" id="placeLogo">
+      <div id="logo-preview" style="display: none; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;"></div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-textarea" placeholder="What's this place about?"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your Review</label>
+        <textarea name="reviewText" class="form-textarea" placeholder="Write the official MooBurger review..."></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-bottom: 1rem;">
+        <div class="score-input-group">
+          <span class="score-input-label" style="font-size: 0.8rem;">🥩 Patty</span>
+          <div class="score-input-burgers" data-name="pattyPower">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)" style="font-size: 1.3rem;">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="pattyPower" value="3">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label" style="font-size: 0.8rem;">💧 Juice</span>
+          <div class="score-input-burgers" data-name="juiceFactor">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)" style="font-size: 1.3rem;">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="juiceFactor" value="3">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label" style="font-size: 0.8rem;">🍞 Bun</span>
+          <div class="score-input-burgers" data-name="bunGame">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)" style="font-size: 1.3rem;">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="bunGame" value="3">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label" style="font-size: 0.8rem;">💰 Value</span>
+          <div class="score-input-burgers" data-name="bangForBuck">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)" style="font-size: 1.3rem;">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="bangForBuck" value="3">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label" style="font-size: 0.8rem;">✨ Vibes</span>
+          <div class="score-input-burgers" data-name="mooVibes">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)" style="font-size: 1.3rem;">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="mooVibes" value="3">
+        </div>
+      </div>
+
+      <%- include('partials/review-sections-form', { existingSections: null }) %>
+
+      <div class="file-upload" style="margin-bottom: 1rem;">
+        <div class="file-upload-icon">📷</div>
+        <div class="file-upload-text">Upload <strong>photos</strong></div>
+        <input type="file" name="photos" accept="image/*" multiple>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">🍔 Add Restaurant</button>
+    </form>
+  </div>
+
+  <!-- Pending Restaurants -->
+  <% if (pendingRestaurants.length > 0) { %>
+    <div class="admin-card" style="border: 2px solid var(--user-color);">
+      <h2>🟣 Pending Restaurant Submissions (<%= pendingRestaurants.length %>)</h2>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Submitted By</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% pendingRestaurants.forEach(r => { %>
+            <tr>
+              <td><a href="/restaurant/<%= r.id %>" style="color: var(--red); font-weight: 600;"><%= r.name %></a></td>
+              <td><%= r.location || '—' %></td>
+              <td><%= r.submittedBy || 'Anonymous' %></td>
+              <td><%= new Date(r.createdAt).toLocaleDateString('en-GB') %></td>
+              <td>
+                <div class="admin-actions">
+                  <form action="/admin/restaurant/<%= r.id %>/validate" method="POST" style="display:inline;">
+                    <button class="btn btn-teal btn-small">Validate</button>
+                  </form>
+                  <form action="/admin/restaurant/<%= r.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Delete this restaurant and all its reviews?')">
+                    <button class="btn btn-danger btn-small">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+
+  <!-- Pending Reviews -->
+  <% if (pendingReviews.length > 0) { %>
+    <div class="admin-card" style="border: 2px solid var(--orange);">
+      <h2>📝 Pending Reviews (<%= pendingReviews.length %>)</h2>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Restaurant</th>
+            <th>Reviewer</th>
+            <th>Review</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% pendingReviews.forEach(rv => { %>
+            <tr>
+              <td><a href="/restaurant/<%= rv.restaurantId %>" style="color: var(--red); font-weight: 600;"><%= rv.restaurant_name %></a></td>
+              <td><%= rv.reviewerName %></td>
+              <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= rv.reviewText %></td>
+              <td>
+                <div class="admin-actions">
+                  <form action="/admin/review/<%= rv.id %>/validate" method="POST" style="display:inline;">
+                    <button class="btn btn-teal btn-small">Validate</button>
+                  </form>
+                  <form action="/admin/review/<%= rv.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Delete this review?')">
+                    <button class="btn btn-danger btn-small">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+
+  <!-- All Restaurants -->
+  <div class="admin-card">
+    <h2>📋 All Restaurants (<%= restaurants.length %>)</h2>
+    <% if (restaurants.length === 0) { %>
+      <div class="empty-state" style="padding: 1.5rem 0;">
+        <div class="empty-icon">🍔</div>
+        <p>No restaurants yet. Add one above!</p>
+      </div>
+    <% } else { %>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Score</th>
+            <th>Reviews</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% restaurants.forEach(r => { %>
+            <tr>
+              <td><a href="/restaurant/<%= r.id %>" style="color: var(--red); font-weight: 600;"><%= r.name %></a></td>
+              <td><%= r.location || '—' %></td>
+              <td>
+                <% if (r.isAdminCreated) { %>
+                  <span class="review-tag tag-official" style="font-size: 0.7rem;">Official</span>
+                <% } else if (r.isValidated) { %>
+                  <span class="review-tag tag-verified" style="font-size: 0.7rem;">Verified</span>
+                <% } else { %>
+                  <span class="review-tag tag-community" style="font-size: 0.7rem;">Community</span>
+                <% } %>
+              </td>
+              <td><strong><%= r.avg_score ? r.avg_score.toFixed(1) : '—' %></strong></td>
+              <td><%= r.review_count %></td>
+              <td>
+                <div class="admin-actions">
+                  <a href="/restaurant/<%= r.id %>" class="btn btn-outline btn-small">View</a>
+                  <form action="/admin/restaurant/<%= r.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Delete this restaurant and ALL its reviews/photos?')">
+                    <button class="btn btn-danger btn-small">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+</div>
+
+<%- include('partials/footer') %>

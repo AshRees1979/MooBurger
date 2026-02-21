@@ -1,0 +1,520 @@
+<%- include('partials/header', { title: restaurant.name }) %>
+
+<%
+function getMooEmoji(score) {
+  if (score >= 4.5) return '🔥🔥🔥';
+  if (score >= 3.5) return '🔥🔥';
+  if (score >= 2.5) return '🔥';
+  if (score >= 1.5) return '👍';
+  return '🤷';
+}
+function getMooText(score) {
+  if (score >= 4.5) return 'LEGENDARY MOO!';
+  if (score >= 3.5) return 'Seriously Good';
+  if (score >= 2.5) return 'Decent Chew';
+  if (score >= 1.5) return 'Could Be Better';
+  return 'Not Rated Yet';
+}
+%>
+
+<section class="detail-hero<%= (photos.length === 0 && !restaurant.coverImage) ? ' detail-hero-fallback' : '' %>">
+  <% if (photos.length > 0) { %>
+    <img src="/uploads/<%= photos[0].filename %>" alt="<%= restaurant.name %>">
+  <% } else if (restaurant.coverImage) { %>
+    <img class="<%= restaurant.coverImage.startsWith('logo-') ? 'logo-hero' : '' %>" src="/uploads/<%= restaurant.coverImage %>" alt="<%= restaurant.name %>">
+  <% } else { %>
+    <img src="/images/hero-bg.jpg" alt="" style="opacity: 0.25;">
+  <% } %>
+  <div class="detail-hero-overlay">
+    <h1><%= restaurant.name %></h1>
+    <div class="location">📍 <%= restaurant.location || 'Location unknown' %></div>
+  </div>
+</section>
+
+<div class="detail-content">
+
+  <% if (!restaurant.isAdminCreated && !restaurant.isValidated) { %>
+    <div class="status-banner user-submitted">
+      🟣 This spot was submitted by the community and hasn't been verified by MooBurger yet.
+    </div>
+  <% } else if (!restaurant.isAdminCreated && restaurant.isValidated) { %>
+    <div class="status-banner validated">
+      ✅ Community submission — verified by MooBurger!
+    </div>
+  <% } %>
+
+  <% if (restaurant.formattedAddress || restaurant.phone || restaurant.website || restaurant.lat) { %>
+    <div class="detail-card fade-in">
+      <h2>📍 Location & Contact</h2>
+      <div class="place-info-grid">
+        <div class="place-info-details">
+          <% if (restaurant.formattedAddress) { %>
+            <div class="place-info-row">
+              <span class="place-info-icon">🏠</span>
+              <div>
+                <div class="place-info-label">Address</div>
+                <div class="place-info-value"><%= restaurant.formattedAddress %></div>
+              </div>
+            </div>
+          <% } %>
+          <% if (restaurant.phone) { %>
+            <div class="place-info-row">
+              <span class="place-info-icon">📞</span>
+              <div>
+                <div class="place-info-label">Phone</div>
+                <a href="tel:<%= restaurant.phone %>" class="place-info-value place-info-link"><%= restaurant.phone %></a>
+              </div>
+            </div>
+          <% } %>
+          <% if (restaurant.website) { %>
+            <div class="place-info-row">
+              <span class="place-info-icon">🌐</span>
+              <div>
+                <div class="place-info-label">Website</div>
+                <a href="<%= restaurant.website %>" target="_blank" rel="noopener" class="place-info-value place-info-link"><%= new URL(restaurant.website).hostname.replace(/^www\./, '') %></a>
+              </div>
+            </div>
+          <% } %>
+          <% if (restaurant.placeId) { %>
+            <div class="place-info-row">
+              <span class="place-info-icon">🗺️</span>
+              <div>
+                <a href="https://www.google.com/maps/place/?q=place_id:<%= restaurant.placeId %>" target="_blank" rel="noopener" class="btn btn-small btn-outline" style="margin-top: 0.25rem;">Open in Google Maps</a>
+              </div>
+            </div>
+          <% } %>
+        </div>
+        <% if (restaurant.lat && restaurant.lng) { %>
+          <div class="place-map-container">
+            <% if (googleMapsApiKey) { %>
+              <div id="detail-map" class="place-map" data-lat="<%= restaurant.lat %>" data-lng="<%= restaurant.lng %>" data-name="<%= restaurant.name %>"></div>
+            <% } else { %>
+              <div class="place-map-fallback">
+                <a href="https://www.google.com/maps?q=<%= restaurant.lat %>,<%= restaurant.lng %>" target="_blank" rel="noopener">
+                  <img src="https://maps.googleapis.com/maps/api/staticmap?center=<%= restaurant.lat %>,<%= restaurant.lng %>&zoom=15&size=400x250&markers=color:red%7C<%= restaurant.lat %>,<%= restaurant.lng %>&key=" alt="Map" style="width: 100%; border-radius: var(--radius-md);">
+                  <div style="text-align: center; margin-top: 0.5rem; color: var(--gray-500); font-size: 0.85rem;">Click to open in Google Maps</div>
+                </a>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (restaurant.description) { %>
+    <div class="detail-card fade-in">
+      <h2>📝 About This Spot</h2>
+      <p style="color: var(--gray-700); line-height: 1.8;"><%= restaurant.description %></p>
+    </div>
+  <% } %>
+
+  <% if (scores.admin > 0 || scores.user > 0) { %>
+    <div class="detail-card fade-in">
+      <h2>🏆 The Scores</h2>
+
+      <div class="scores-dual">
+        <div class="score-panel" style="border-color: <%= scores.admin > 0 ? 'var(--gold)' : 'var(--dark-border)' %>;">
+          <div class="score-panel-label admin-label">🍔 MooBurger Score</div>
+          <% if (scores.admin > 0) { %>
+            <div class="score-panel-value admin-value"><%= scores.admin.toFixed(1) %></div>
+            <div class="score-panel-sub"><%= scores.adminCount %> official review<%= scores.adminCount !== 1 ? 's' : '' %></div>
+            <div class="score-panel-meter"><%= getMooEmoji(scores.admin) %></div>
+          <% } else { %>
+            <div class="score-panel-value" style="color: var(--text-muted);">—</div>
+            <div class="score-panel-sub">Not yet reviewed</div>
+          <% } %>
+        </div>
+        <div class="score-panel" style="border-color: <%= scores.user > 0 ? 'var(--user-color)' : 'var(--dark-border)' %>;">
+          <div class="score-panel-label user-label">👥 Community Score</div>
+          <% if (scores.user > 0) { %>
+            <div class="score-panel-value user-value"><%= scores.user.toFixed(1) %></div>
+            <div class="score-panel-sub"><%= scores.userCount %> community review<%= scores.userCount !== 1 ? 's' : '' %></div>
+            <div class="score-panel-meter"><%= getMooEmoji(scores.user) %></div>
+          <% } else { %>
+            <div class="score-panel-value" style="color: var(--text-muted);">—</div>
+            <div class="score-panel-sub">No community reviews yet</div>
+          <% } %>
+        </div>
+      </div>
+
+      <% if (adminReview) { %>
+        <div style="margin-top: 0.75rem;">
+          <div class="score-row">
+            <span class="score-label">🥩 Patty Power</span>
+            <div class="score-burgers">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <span class="score-burger <%= i <= adminReview.pattyPower ? 'active' : '' %>">🍔</span>
+              <% } %>
+            </div>
+            <span class="score-number"><%= adminReview.pattyPower %>/5</span>
+          </div>
+          <div class="score-row">
+            <span class="score-label">💧 Juice Factor</span>
+            <div class="score-burgers">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <span class="score-burger <%= i <= adminReview.juiceFactor ? 'active' : '' %>">🍔</span>
+              <% } %>
+            </div>
+            <span class="score-number"><%= adminReview.juiceFactor %>/5</span>
+          </div>
+          <div class="score-row">
+            <span class="score-label">🍞 Bun Game</span>
+            <div class="score-burgers">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <span class="score-burger <%= i <= adminReview.bunGame ? 'active' : '' %>">🍔</span>
+              <% } %>
+            </div>
+            <span class="score-number"><%= adminReview.bunGame %>/5</span>
+          </div>
+          <div class="score-row">
+            <span class="score-label">💰 Bang for Buck</span>
+            <div class="score-burgers">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <span class="score-burger <%= i <= adminReview.bangForBuck ? 'active' : '' %>">🍔</span>
+              <% } %>
+            </div>
+            <span class="score-number"><%= adminReview.bangForBuck %>/5</span>
+          </div>
+          <div class="score-row">
+            <span class="score-label">✨ Moo Vibes</span>
+            <div class="score-burgers">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <span class="score-burger <%= i <= adminReview.mooVibes ? 'active' : '' %>">🍔</span>
+              <% } %>
+            </div>
+            <span class="score-number"><%= adminReview.mooVibes %>/5</span>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  <% } %>
+
+  <% if (photos.length > 0) { %>
+    <div class="detail-card fade-in">
+      <h2>📸 Photos (<%= photos.length %>)</h2>
+      <div class="photo-gallery">
+        <% photos.forEach(p => { %>
+          <div class="photo-item" onclick="openLightbox('/uploads/<%= p.filename %>')">
+            <img src="/uploads/<%= p.filename %>" alt="<%= p.caption || restaurant.name %>" loading="lazy">
+            <div class="photo-overlay">
+              <span><%= p.uploadedBy || 'Anonymous' %></span>
+              <% if (p.isAdmin) { %><span class="review-tag tag-official" style="margin-left:0.25rem;">Official</span><% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="detail-card fade-in">
+    <h2>💬 Reviews (<%= reviews.length %>)</h2>
+
+    <% if (reviews.length === 0) { %>
+      <div class="empty-state" style="padding: 1.5rem 0;">
+        <div class="empty-icon">🤔</div>
+        <p>No reviews yet. Be the first!</p>
+      </div>
+    <% } %>
+
+    <% reviews.forEach(rv => { %>
+      <div class="review-item <%= rv.isAdmin ? 'admin-review' : (rv.isValidated ? 'validated-review' : 'user-review') %>">
+        <div class="review-header">
+          <div class="reviewer-info">
+            <div class="reviewer-avatar <%= rv.isAdmin ? 'admin-avatar' : (rv.isValidated ? 'validated-avatar' : 'user-avatar') %>">
+              <%= rv.reviewerName ? rv.reviewerName.charAt(0).toUpperCase() : '?' %>
+            </div>
+            <div>
+              <div class="reviewer-name"><%= rv.reviewerName %></div>
+              <div class="review-date"><%= new Date(rv.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) %></div>
+            </div>
+          </div>
+          <% if (rv.isAdmin) { %>
+            <span class="review-tag tag-official">🍔 Official MooBurger</span>
+          <% } else if (rv.isValidated) { %>
+            <span class="review-tag tag-verified">✅ Verified</span>
+          <% } else { %>
+            <span class="review-tag tag-community">👤 Community</span>
+          <% } %>
+        </div>
+        <% if (rv.reviewText) { %>
+          <div class="review-text"><%= rv.reviewText %></div>
+        <% } %>
+        <div class="review-scores">
+          <span class="mini-score"><span class="mini-score-label">🥩</span> <%= rv.pattyPower %>/5</span>
+          <span class="mini-score"><span class="mini-score-label">💧</span> <%= rv.juiceFactor %>/5</span>
+          <span class="mini-score"><span class="mini-score-label">🍞</span> <%= rv.bunGame %>/5</span>
+          <span class="mini-score"><span class="mini-score-label">💰</span> <%= rv.bangForBuck %>/5</span>
+          <span class="mini-score"><span class="mini-score-label">✨</span> <%= rv.mooVibes %>/5</span>
+        </div>
+        <% if (rv.sections && Object.keys(rv.sections).length > 0) { %>
+          <%
+            const filledSections = reviewSections.filter(s => rv.sections[s.key]);
+            const previewCount = 3;
+            const previewSections = filledSections.slice(0, previewCount);
+            const hiddenSections = filledSections.slice(previewCount);
+          %>
+          <div class="review-sections-display">
+            <% previewSections.forEach(s => { %>
+              <div class="review-section-item">
+                <div class="review-section-header">
+                  <span class="review-section-emoji"><%= s.emoji %></span>
+                  <span class="review-section-title"><%= s.title %></span>
+                </div>
+                <div class="review-section-body"><%= rv.sections[s.key] %></div>
+              </div>
+            <% }) %>
+            <% if (hiddenSections.length > 0) { %>
+              <div class="review-sections-hidden" id="sections-<%= rv.id %>" style="display: none;">
+                <% hiddenSections.forEach(s => { %>
+                  <div class="review-section-item">
+                    <div class="review-section-header">
+                      <span class="review-section-emoji"><%= s.emoji %></span>
+                      <span class="review-section-title"><%= s.title %></span>
+                    </div>
+                    <div class="review-section-body"><%= rv.sections[s.key] %></div>
+                  </div>
+                <% }) %>
+              </div>
+              <button type="button" class="btn btn-small btn-outline review-sections-toggle" onclick="toggleReviewSections(<%= rv.id %>, this)" style="margin-top: 0.5rem;">
+                Read more (<%= hiddenSections.length %> more section<%= hiddenSections.length > 1 ? 's' : '' %>) ▼
+              </button>
+            <% } %>
+          </div>
+        <% } %>
+        <% if (isAdmin) { %>
+          <form action="/admin/review/<%= rv.id %>/delete" method="POST" style="margin-top: 0.75rem;" onsubmit="return confirm('Delete this review?')">
+            <button class="btn btn-danger btn-small">Remove</button>
+          </form>
+        <% } %>
+      </div>
+    <% }) %>
+  </div>
+
+  <div class="detail-card fade-in">
+    <button class="collapsible-toggle" onclick="toggleCollapsible(this)">
+      <span>✍️ Leave a Review</span>
+      <span>▼</span>
+    </button>
+    <div class="collapsible-content">
+      <form action="/restaurant/<%= restaurant.id %>/review" method="POST" style="margin-top: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input type="text" name="reviewerName" class="form-input" placeholder="What do we call you?" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Your Review</label>
+          <textarea name="reviewText" class="form-textarea" placeholder="Tell us about your burger experience..." required></textarea>
+        </div>
+
+        <div class="score-input-group">
+          <span class="score-input-label">🥩 Patty Power</span>
+          <div class="score-input-burgers" data-name="pattyPower">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="pattyPower" value="3">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label">💧 Juice Factor</span>
+          <div class="score-input-burgers" data-name="juiceFactor">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="juiceFactor" value="3">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label">🍞 Bun Game</span>
+          <div class="score-input-burgers" data-name="bunGame">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="bunGame" value="3">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label">💰 Bang for Buck</span>
+          <div class="score-input-burgers" data-name="bangForBuck">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="bangForBuck" value="3">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label">✨ Moo Vibes</span>
+          <div class="score-input-burgers" data-name="mooVibes">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="mooVibes" value="3">
+        </div>
+
+        <%- include('partials/review-sections-form', { existingSections: null }) %>
+
+        <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Submit Review</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="detail-card fade-in">
+    <button class="collapsible-toggle" onclick="toggleCollapsible(this)">
+      <span>📸 Upload Photos</span>
+      <span>▼</span>
+    </button>
+    <div class="collapsible-content">
+      <form action="/restaurant/<%= restaurant.id %>/photo" method="POST" enctype="multipart/form-data" style="margin-top: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input type="text" name="uploadedBy" class="form-input" placeholder="Who's snapping?">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Caption</label>
+          <input type="text" name="caption" class="form-input" placeholder="What's in the shot?">
+        </div>
+        <div class="file-upload">
+          <div class="file-upload-icon">📷</div>
+          <div class="file-upload-text">Drop your <strong>burger pics</strong> here or click to browse</div>
+          <input type="file" name="photos" accept="image/*" multiple required>
+        </div>
+        <button type="submit" class="btn btn-teal" style="margin-top: 1rem; width: 100%;">Upload Photos</button>
+      </form>
+    </div>
+  </div>
+
+  <% if (isAdmin && adminReview) { %>
+    <div class="detail-card fade-in" style="border: 2px solid var(--red);">
+      <h2 style="color: var(--red);">✏️ Admin: Edit Official Review</h2>
+      <form action="/admin/review/<%= adminReview.id %>/edit" method="POST">
+        <div class="form-group">
+          <label class="form-label">Official Review</label>
+          <textarea name="reviewText" class="form-textarea" required><%= adminReview.reviewText %></textarea>
+        </div>
+
+        <div class="score-input-group">
+          <span class="score-input-label">🥩 Patty Power</span>
+          <div class="score-input-burgers" data-name="pattyPower">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="pattyPower" value="<%= adminReview.pattyPower %>">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label">💧 Juice Factor</span>
+          <div class="score-input-burgers" data-name="juiceFactor">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="juiceFactor" value="<%= adminReview.juiceFactor %>">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label">🍞 Bun Game</span>
+          <div class="score-input-burgers" data-name="bunGame">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="bunGame" value="<%= adminReview.bunGame %>">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label">💰 Bang for Buck</span>
+          <div class="score-input-burgers" data-name="bangForBuck">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="bangForBuck" value="<%= adminReview.bangForBuck %>">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label">✨ Moo Vibes</span>
+          <div class="score-input-burgers" data-name="mooVibes">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="mooVibes" value="<%= adminReview.mooVibes %>">
+        </div>
+
+        <%- include('partials/review-sections-form', { existingSections: adminReview.sections || null, forceOpen: true }) %>
+
+        <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Save Changes</button>
+      </form>
+    </div>
+  <% } %>
+
+  <% if (isAdmin) { %>
+    <div class="detail-card fade-in" style="border: 2px solid var(--red);">
+      <h2 style="color: var(--red);">🔐 Admin: <%= adminReview ? 'Add Another Official Review' : 'Add Official Review' %></h2>
+      <form action="/admin/restaurant/<%= restaurant.id %>/review" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label class="form-label">Official Review</label>
+          <textarea name="reviewText" class="form-textarea" placeholder="Write the official MooBurger take..." required></textarea>
+        </div>
+
+        <div class="score-input-group">
+          <span class="score-input-label">🥩 Patty Power</span>
+          <div class="score-input-burgers" data-name="pattyPower">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="pattyPower" value="3">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label">💧 Juice Factor</span>
+          <div class="score-input-burgers" data-name="juiceFactor">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="juiceFactor" value="3">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label">🍞 Bun Game</span>
+          <div class="score-input-burgers" data-name="bunGame">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="bunGame" value="3">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label">💰 Bang for Buck</span>
+          <div class="score-input-burgers" data-name="bangForBuck">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="bangForBuck" value="3">
+        </div>
+        <div class="score-input-group">
+          <span class="score-input-label">✨ Moo Vibes</span>
+          <div class="score-input-burgers" data-name="mooVibes">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+            <% } %>
+          </div>
+          <input type="hidden" name="mooVibes" value="3">
+        </div>
+
+        <%- include('partials/review-sections-form', { existingSections: null }) %>
+
+        <div class="file-upload" style="margin-top: 1rem;">
+          <div class="file-upload-icon">📷</div>
+          <div class="file-upload-text">Upload <strong>official photos</strong></div>
+          <input type="file" name="photos" accept="image/*" multiple>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Post Official Review</button>
+      </form>
+    </div>
+  <% } %>
+
+</div>
+
+<%- include('partials/footer') %>

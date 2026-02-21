@@ -1,0 +1,135 @@
+<%- include('partials/header', { title: 'Submit a Spot' }) %>
+
+<section class="submit-hero">
+  <span style="font-size: 3rem; display: block; margin-bottom: 0.5rem;">🐄</span>
+  <h1>Know a Great Burger Spot?</h1>
+  <p>Share it with the MooBurger community! Tell us about your favourite place.</p>
+</section>
+
+<div class="submit-form-container">
+  <div class="detail-card">
+    <form action="/submit" method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label class="form-label">Search for Restaurant *</label>
+        <input type="text" id="place-autocomplete" class="form-input" placeholder="Start typing a restaurant name..." autocomplete="off">
+        <div id="place-suggestions" class="place-suggestions"></div>
+        <div class="form-hint">Type to search Google Maps, or enter manually below</div>
+      </div>
+
+      <div id="place-selected" class="place-selected-card" style="display: none;">
+        <div class="place-selected-inner">
+          <span class="place-selected-icon">📍</span>
+          <div>
+            <strong id="place-selected-name"></strong>
+            <div id="place-selected-address" style="font-size: 0.85rem; color: var(--gray-500);"></div>
+          </div>
+          <button type="button" class="btn btn-small btn-outline" onclick="clearPlaceSelection()">Clear</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Restaurant Name *</label>
+        <input type="text" name="name" id="restaurant-name" class="form-input" placeholder="e.g. Big Bob's Burgers" value="<%= typeof prefill !== 'undefined' ? prefill : '' %>" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Location</label>
+        <input type="text" name="location" id="restaurant-location" class="form-input" placeholder="e.g. 123 High Street, London">
+      </div>
+
+      <input type="hidden" name="placeId" id="placeId">
+      <input type="hidden" name="formattedAddress" id="formattedAddress">
+      <input type="hidden" name="phone" id="placePhone">
+      <input type="hidden" name="website" id="placeWebsite">
+      <input type="hidden" name="lat" id="placeLat">
+      <input type="hidden" name="lng" id="placeLng">
+      <input type="hidden" name="autoLogo" id="placeLogo">
+      <div id="logo-preview" style="display: none; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;"></div>
+
+      <div class="form-group">
+        <label class="form-label">Your Name</label>
+        <input type="text" name="submittedBy" class="form-input" placeholder="What should we call you?">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tell Us About It</label>
+        <textarea name="description" class="form-textarea" placeholder="What makes this place special? What should people order?"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Your Review</label>
+        <textarea name="reviewText" class="form-textarea" placeholder="Share your burger experience..."></textarea>
+      </div>
+
+      <h3 style="margin: 1.5rem 0 1rem; color: var(--navy); font-size: 1.1rem;">Rate It!</h3>
+
+      <div class="score-input-group">
+        <span class="score-input-label">🥩 Patty Power</span>
+        <div class="score-input-burgers" data-name="pattyPower">
+          <% for (let i = 1; i <= 5; i++) { %>
+            <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+          <% } %>
+        </div>
+        <input type="hidden" name="pattyPower" value="3">
+      </div>
+      <div class="score-input-group">
+        <span class="score-input-label">💧 Juice Factor</span>
+        <div class="score-input-burgers" data-name="juiceFactor">
+          <% for (let i = 1; i <= 5; i++) { %>
+            <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+          <% } %>
+        </div>
+        <input type="hidden" name="juiceFactor" value="3">
+      </div>
+      <div class="score-input-group">
+        <span class="score-input-label">🍞 Bun Game</span>
+        <div class="score-input-burgers" data-name="bunGame">
+          <% for (let i = 1; i <= 5; i++) { %>
+            <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+          <% } %>
+        </div>
+        <input type="hidden" name="bunGame" value="3">
+      </div>
+      <div class="score-input-group">
+        <span class="score-input-label">💰 Bang for Buck</span>
+        <div class="score-input-burgers" data-name="bangForBuck">
+          <% for (let i = 1; i <= 5; i++) { %>
+            <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+          <% } %>
+        </div>
+        <input type="hidden" name="bangForBuck" value="3">
+      </div>
+      <div class="score-input-group">
+        <span class="score-input-label">✨ Moo Vibes</span>
+        <div class="score-input-burgers" data-name="mooVibes">
+          <% for (let i = 1; i <= 5; i++) { %>
+            <button type="button" class="burger-btn" data-value="<%= i %>" onclick="setScore(this)">🍔</button>
+          <% } %>
+        </div>
+        <input type="hidden" name="mooVibes" value="3">
+      </div>
+
+      <%- include('partials/review-sections-form', { existingSections: null }) %>
+
+      <div class="form-group" style="margin-top: 1.5rem;">
+        <label class="form-label">Upload Photos</label>
+        <div class="file-upload">
+          <div class="file-upload-icon">📷</div>
+          <div class="file-upload-text">Drop your <strong>burger pics</strong> here or click to browse</div>
+          <input type="file" name="photos" accept="image/*" multiple>
+        </div>
+        <div class="form-hint">Up to 10 photos, max 10MB each</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; margin-top: 0.5rem;">
+        🍔 Submit This Spot
+      </button>
+
+      <p style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--gray-500);">
+        Your submission will appear with a community badge until the MooBurger team validates it.
+      </p>
+    </form>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

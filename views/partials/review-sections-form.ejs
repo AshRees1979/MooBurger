@@ -1,0 +1,24 @@
+<div class="review-sections-form">
+  <button type="button" class="collapsible-toggle" onclick="toggleCollapsible(this)" style="margin-bottom: 0.5rem;">
+    <span>📋 Detailed Breakdown (optional — but way more fun!)</span>
+    <span>▼</span>
+  </button>
+  <div class="collapsible-content <%= typeof forceOpen !== 'undefined' && forceOpen ? 'open' : '' %>">
+    <div class="sections-grid">
+      <% reviewSections.forEach(function(s) { %>
+        <div class="section-input-card">
+          <label class="section-input-label">
+            <span class="section-emoji"><%= s.emoji %></span>
+            <span><%= s.title %></span>
+          </label>
+          <textarea
+            name="section_<%= s.key %>"
+            class="form-textarea section-textarea"
+            placeholder="<%= s.hint %>"
+            rows="2"
+          ><%= (typeof existingSections !== 'undefined' && existingSections && existingSections[s.key]) ? existingSections[s.key] : '' %></textarea>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</div>

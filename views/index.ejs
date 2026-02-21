@@ -1,0 +1,98 @@
+<%- include('partials/header') %>
+
+<section class="hero">
+  <div class="hero-bg">
+    <img src="/images/hero-bg.jpg" alt="" loading="eager">
+  </div>
+  <div class="hero-content fade-in">
+    <div class="hero-brand">
+      <img class="hero-brand-icon" src="/images/bull-skull.svg" alt="">
+      <h1 class="hero-brand-text">Moo<span>Burger</span></h1>
+    </div>
+    <p>Honest reviews from real burger lovers. We eat the burgers so you know where to go.</p>
+    <div class="hero-actions" style="margin-bottom: 1.5rem;">
+      <a href="/tierlist" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 0.95rem; border-radius: 50px;">🏆 View Tier List</a>
+    </div>
+    <div class="hero-search">
+      <input type="text" id="restaurant-search" class="hero-search-input" placeholder="Search burger spots..." autofocus>
+    </div>
+  </div>
+</section>
+
+<% if (typeof submitted !== 'undefined' || (typeof locals !== 'undefined' && locals.submitted)) { %>
+<div class="toast">Your burger spot has been submitted! We'll check it out soon.</div>
+<% } %>
+
+<section class="section" id="restaurants">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">🍔 Burger Spots — Ranked</h2>
+      <a href="/submit" class="btn btn-primary">+ Add Yours</a>
+    </div>
+
+    <div id="no-results" class="no-results-card" style="display: none;">
+      <div class="no-results-emoji">🤔</div>
+      <h3>Can't find what you're looking for?</h3>
+      <p>We haven't reviewed that spot yet — but you can help!</p>
+      <div class="no-results-actions">
+        <a href="/submit" class="btn btn-primary">📝 Review It Yourself</a>
+        <a href="/submit" class="btn btn-orange" id="recommend-btn">📣 Recommend We Review It</a>
+      </div>
+    </div>
+
+    <% if (restaurants.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">🐄</div>
+        <p>No burger spots yet. Be the first to add one!</p>
+        <a href="/submit" class="btn btn-primary" style="margin-top: 1rem;">Submit a Spot</a>
+      </div>
+    <% } else { %>
+      <div class="restaurant-grid" id="restaurant-grid">
+        <% restaurants.forEach((r, idx) => { %>
+          <a href="/restaurant/<%= r.id %>"
+             class="restaurant-card <%= !r.isAdminCreated && !r.isValidated ? 'user-submitted' : '' %> <%= !r.isAdminCreated && r.isValidated ? 'validated' : '' %> fade-in"
+             data-name="<%= r.name.toLowerCase() %>"
+             data-location="<%= (r.location || '').toLowerCase() %>">
+
+            <% if (r.avg_score > 0) { %>
+              <span class="card-rank">#<%= idx + 1 %></span>
+            <% } %>
+
+            <% if (r.isAdminCreated) { %>
+              <span class="card-badge badge-admin">Official</span>
+            <% } else if (r.isValidated) { %>
+              <span class="card-badge badge-validated">Verified</span>
+            <% } else { %>
+              <span class="card-badge badge-user">Community</span>
+            <% } %>
+
+            <% if (r.first_photo || r.coverImage) { %>
+              <% var imgFile = r.first_photo || r.coverImage; %>
+              <img class="card-image<%= (!r.first_photo && r.coverImage && r.coverImage.startsWith('logo-')) ? ' logo-image' : '' %>" src="/uploads/<%= imgFile %>" alt="<%= r.name %>" loading="lazy">
+            <% } else { %>
+              <div class="card-image-placeholder">🍔</div>
+            <% } %>
+
+            <div class="card-body">
+              <h3 class="card-title"><%= r.name %></h3>
+              <div class="card-location">📍 <%= r.location || 'Location not set' %></div>
+              <div class="card-footer">
+                <div class="moo-score" title="MooBurger official score">
+                  <span class="moo-score-value"><%= r.admin_score ? r.admin_score.toFixed(1) : '—' %></span>
+                  <span class="moo-score-label">MOO<br>SCORE</span>
+                </div>
+                <div class="moo-score" title="Community average score" style="opacity: 0.7;">
+                  <span class="moo-score-value" style="color: var(--user-color); font-size: 1.2rem;"><%= r.user_score ? r.user_score.toFixed(1) : '—' %></span>
+                  <span class="moo-score-label">USER<br>SCORE</span>
+                </div>
+                <span class="review-count"><%= r.review_count %> review<%= r.review_count !== 1 ? 's' : '' %></span>
+              </div>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
